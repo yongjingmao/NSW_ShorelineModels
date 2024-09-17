@@ -1,0 +1,5 @@
+% MAKE SOME TRANSECT ADJUSTMENTS
+
+%% some transects are set to provide no prediction (typically because of complex observed shoreline behavior/data)
+%tr_no_pred=[915 12608:12609 12829:12863 13021:13023 13560:13577 14076:14083 14147 14825 14842:14847 14975 15198 15650 15915:15922 16318 16929 17013:17060  17182:17196 17229:17234 17392 17843 22567 25896:25897 27147:27166 30135:30144 30195:30202 30348:30352 30749:30765 31002:31048 31741:31744]; 
+%bool_no_prediction=bool_no_prediction | ismember(ID,tr_no_pred);
