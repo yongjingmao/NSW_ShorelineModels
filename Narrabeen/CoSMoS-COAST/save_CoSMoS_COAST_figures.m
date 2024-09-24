@@ -156,6 +156,7 @@ for i=1:length(ids)
         
         ylabel({'longshore','position','(no assim.) [m]'});
         set(gca,'FontSize',14,'XTickLabel',[]);
+        set(gca,'xtick',datenum(year(t0):4:year(tstop),1,1)); datetick('x','keeplimits','keepticks');
         ax = gca; ax.YRuler.Exponent = 0;
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -334,10 +335,12 @@ for i=1:length(ids)
         han1=plot([tforecast tforecast],[vmin vmax],'--k'); set(han1,'linewidth',2);
         han1=plot([tforecast2 tforecast2],[vmin vmax],'--k'); set(han1,'linewidth',2);
         
-        axis([t0 tforecast2+2*365 vmin vmax]);
+        %axis([t0 tforecast2+2*365 vmin vmax]);
         
         ylabel({'noise','parameter','\sigma [var.]'});
         set(gca,'FontSize',14);
+        set(gca,'Xlim',[t0 tforecast2+2*365],'Ylim',[vmin vmax]);
+        set(gca,'xtick',datenum(year(t0):4:year(tstop),1,1)); datetick('x','keeplimits','keepticks');
         ax = gca; ax.YRuler.Exponent = 0;
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -696,7 +699,7 @@ for i=1:length(ids)
         axis([t0 t1(min(n+tmore,length(t1))) vmin vmax]);
         
         set(gca,'Xlim',[t0 tforecast2+1*365.25],'Ylim',[vmin vmax]);
-        set(gca,'xtick',datenum(1995:2:2021,1,1)); datetick('x','keeplimits','keepticks');
+        set(gca,'xtick',datenum(year(t0):4:year(tstop),1,1)); datetick('x','keeplimits','keepticks');
         set(gca,'Xlim',[t0 tforecast2+1*365.25],'Ylim',[vmin vmax]);
         set(gca,'FontSize',14);
         
@@ -729,7 +732,7 @@ for i=1:length(ids)
         axis([t0 t1(min(n+tmore,length(t1))) vmin vmax]);
         
         set(gca,'Xlim',[t0 tforecast2+1*365.25],'Ylim',[vmin vmax]);
-        set(gca,'xtick',datenum(1999:2:2021,1,1)); datetick('x','keeplimits','keepticks'); axis tight;
+       set(gca,'xtick',datenum(year(t0):4:year(tstop),1,1)); datetick('x','keeplimits','keepticks');
         set(gca,'Xlim',[t0 tforecast2+1*365.25],'Ylim',[vmin vmax]);
         set(gca,'FontSize',14);
         xlabel('time'); ylabel('Shoreline position [m]');
@@ -737,16 +740,16 @@ for i=1:length(ids)
         han1=legend('observed C.I.','observed','95% CI','ensemble mean');
         set(han1,'Position',[0.0909193847350033 0.395361616706461 0.185869561330132 0.127857139280864]);
         
-        annotation(gcf,'line',[0.746444746376811 0.746444746376811],[0.96047619047619 0.069165017807677],'LineStyle','--','LineWidth',2);
-        annotation(gcf,'line',[0.946512681159419 0.946512681159419],[0.96047619047619 0.069165017807677],'LineStyle','--','LineWidth',2);
+        annotation(gcf,'line',[(tforecast-t0)/(tforecast2+1*365.25-t0) (tforecast-t0)/(tforecast2+1*365.25-t0)],[0.96047619047619 0.069165017807677],'LineStyle','--','LineWidth',2);
+        %annotation(gcf,'line',[(tforecast-t0)/(tstop-t0) (tforecast-t0)/(tstop-t0)],[0.96047619047619 0.069165017807677],'LineStyle','--','LineWidth',2);
         
-        annotation(gcf,'doublearrow',[0.724660326086956 0.767368659420289],[0.506848568790397 0.506925207756233]);
-        annotation(gcf,'doublearrow',[0.925203804347827 0.96791213768116],[0.506935628545047 0.507012267510882]);
+        annotation(gcf,'doublearrow',[(tforecast-t0)/(tforecast2+1*365.25-t0)-0.025 (tforecast-t0)/(tforecast2+1*365.25-t0)+0.025],[0.506848568790397 0.506925207756233]);
+        %annotation(gcf,'doublearrow',[(tforecast2-t0)/(tstop-t0)-0.025 (tforecast2-t0)/(tstop-t0)+0.025],[0.506935628545047 0.507012267510882]);
         
-        han1=annotation(gcf,'textbox','Position',[0.625448369565217 0.473173196148265 0.07 0.0700000000000002],'String',{'Hindcast','(Calibration)'},'FitBoxToText','off','LineStyle','none','FontSize',14,'HorizontalAlignment','center');
-        han1=annotation(gcf,'textbox','Position',[0.820298913043479 0.474601767576835 0.07 0.0700000000000001],'String',{'Hindcast','(Validation)'},'FitBoxToText','off','LineStyle','none','FontSize',14,'HorizontalAlignment','center');
+        han1=annotation(gcf,'textbox','Position',[(tforecast-t0)/(tforecast2+1*365.25-t0)-0.13 0.473173196148265 0.07 0.0700000000000002],'String',{'Hindcast','(Calibration)'},'FitBoxToText','off','LineStyle','none','FontSize',14,'HorizontalAlignment','center');
+        han1=annotation(gcf,'textbox','Position',[(tforecast-t0)/(tforecast2+1*365.25-t0)+0.03 0.474601767576835 0.07 0.0700000000000001],'String',{'Hindcast','(Validation)'},'FitBoxToText','off','LineStyle','none','FontSize',14,'HorizontalAlignment','center');
         %han1=annotation(gcf,'textbox','Position',[0.926354166666666 0.461428923185154 0.07 0.0700000000000001],'String',{},'FitBoxToText','off','LineStyle','none','FontSize',12,'HorizontalAlignment','center','Rotation',90);
-        annotation('textarrow',[0.891485507246376 0.858786231884057],[0.553111739745404 0.610749646393211],'String','Forecast','HeadStyle','none','LineStyle','none', 'TextRotation',90,'FontSize',12);
+        %annotation('textarrow',[0.891485507246376 0.858786231884057],[0.553111739745404 0.610749646393211],'String','Forecast','HeadStyle','none','LineStyle','none', 'TextRotation',90,'FontSize',12);
 
         text(0.5*(tforecast+tforecast2)-2.5*365,vmin+0.2*(vmax-vmin),['RMSE (sat) = ',num2str(RMSE_sat(id_tr),3),' m'],'FontSize',14);
         text(0.5*(tforecast+tforecast2)-2.5*365,vmin+0.075*(vmax-vmin),['within CI = ',num2str(PCT_sat(id_tr),3),'%'],'FontSize',14);
@@ -768,4 +771,4 @@ for i=1:length(ids)
     
 end
 
-delete(gcp('nocreate'))
+%delete(gcp('nocreate'))

@@ -757,8 +757,11 @@ da_var_smooth     =[   0      0      1      1      1       1      1       1     
 da_var_alpha      =[   0      0     0.25    0.25   0.25    0.25   0.25   0.95     0.75  ]; % smoothing value
 da_var_bound      =[   0      0      1      1      1       1      1       1       1     ]; % flag to indicate if the data assimilation variable should be bounded
 da_var_add_noise  =[   1      1      1      1      1       1      1       1       1     ]; % flag to indicate if noise should be added to the data assimilation variable
-%da_var_noise_fac  =[  0.5    2.0   0.025  0.025  0.0025  0.005    0.01   0.1     0.0005]; % noise factor coefficient
-da_var_noise_fac  =[  1.2    0.5   0.025  0.025  0.0025  0.005    0.01   0.025     0.00025]; % noise factor coefficient
+if Nonstationary
+    da_var_noise_fac  =[  0.5    2.0   0.05  0.05  0.005  0.005    0.01   0.1     0.0005]; % noise factor coefficient
+else
+    da_var_noise_fac  =[  1.2    0.5   0.025  0.025  0.0025  0.005    0.01   0.025     0.00025]; % noise factor coefficient
+end
 
 Nvars=length(da_vars); % the number of variables in the assimilated state vector
 
@@ -994,6 +997,12 @@ else
     HOLD_THE_LINE=0; CONTINUED_ACCRETION=1; OUTPUT_DIR='results\CS_LS';
 end
 
+if Nonstationary
+    OUTPUT_DIR = [OUTPUT_DIR '_Nonstationary'];
+else
+    OUTPUT_DIR = [OUTPUT_DIR '_Stationary'];
+end
+
 SAVE_DATA=1;  % data is to be saved
 if SAVE_DATA
 
@@ -1068,6 +1077,7 @@ if SAVE_DATA
     % model output times
     t_output_times=[t0+1 ...
         t0+1:output_interval:tstop ...
+        t_obs...
         tstop ...
         datenum(1990:5:2100,1,1) ...
         t1(find(Smean>=0.00,1,'first')) ...
@@ -1761,14 +1771,32 @@ for n=1:len-1 % for all time steps
 
         end
     end
+    % Run pred_nonstationary when reaching tforecast
+    if t1(n+1) == tforecast
+        if Nonstationary
+            fprintf('Start calibrate and predict non-stationary variables')
+            pred_nonstationary
+        end
+    end
 
     % TURN OFF DATA ASSIMILATION (and the addative noise) during the forecast period
-    if DATA_ASSIMILATION && t1(n+1)>=tforecast
-        DATA_ASSIMILATION=0;
-        ADDITIVE_NOISE_LT=0;
-        PLOT=0;
-        PLOT_INTERVAL=30;
-        vlt_assim=vlt;
+    if t1(n+1)>=tforecast
+        if DATA_ASSIMILATION
+            DATA_ASSIMILATION=0;
+            ADDITIVE_NOISE_LT=0;
+            %ADDITIVE_NOISE = 0;                       
+            PLOT=0;
+            PLOT_INTERVAL=30;
+            vlt_assim=vlt;
+        end
+        
+        if Nonstationary
+            % Use the prediction of non-stationary parameters (ca, ce, and phi)
+            DT = DT_cali(:, :, n);
+            DY = DY_cali(:, :, n);
+            HSB = HSB_cali(:, :, n);
+        end
+
     end
 
     if ~CONTINUED_ACCRETION && n+1==nforecast2
@@ -1847,6 +1875,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 save_CoSMoS_COAST_skill_metrics
+fprintf(['RMSE =' num2str(mean(RMSE_sat))])
 
 % plot skill results every so often and for transects with high RMS error
 % ids2plot=ID(1:1:Ntr);
@@ -1858,9 +1887,9 @@ save_CoSMoS_COAST_figures % (for the production runs we will often not save the 
 % Save model results to .mat files
 if SAVE_DATA
     fprintf('saving output file ... ');
-    matname_tr=[OUTPUT_DIR,filesep,'mat',filesep,'CoSMoS_COAST_results_',datestr(t1(n+1)+1),'_SL=',num2str(100*Smean(n+1),'%2.0f'),'cm_transects.mat'];
-    matname1=[OUTPUT_DIR,filesep,'mat',filesep,'CoSMoS_COAST_results_',datestr(t1(n+1)+1),'_SL=',num2str(100*Smean(n+1),'%2.0f'),'cm_state.mat'];
-    matname2=[OUTPUT_DIR,filesep,'mat',filesep,'CoSMoS_COAST_results_',datestr(t1(n+1)+1),'_SL=',num2str(100*Smean(n+1),'%2.0f'),'cm_params.mat'];
+    matname_tr=[OUTPUT_DIR,filesep,'mat',filesep,'CoSMoS_COAST_results_',datestr(tforecast),'_SL=',num2str(100*Smean(n+1),'%2.0f'),'cm_transects.mat'];
+    matname1=[OUTPUT_DIR,filesep,'mat',filesep,'CoSMoS_COAST_results_',datestr(tforecast),'_SL=',num2str(100*Smean(n+1),'%2.0f'),'cm_state.mat'];
+    matname2=[OUTPUT_DIR,filesep,'mat',filesep,'CoSMoS_COAST_results_',datestr(tforecast),'_SL=',num2str(100*Smean(n+1),'%2.0f'),'cm_params.mat'];
 
     save(matname_tr,'transects','ids','x_on','y_on','x_off','y_off','phi','Ymin','bool_full_model','bool_cross_shore_only','bool_rate_only','bool_cliff_only','bool_no_prediction','bool_full_model_mid','littoral_cell_names','littoral_cell_names_unique','littoral_cell_type','littoral_cell_tr_start','littoral_cell_tr_end','N_full_model_sections','N_cross_shore_only_sections','N_rate_only_sections','id_full_model_start','id_full_model_end','id_cross_shore_only_start','id_cross_shore_only_end','id_rate_only_start','id_rate_only_end','littoral_cell_tr_length','N_littoral_cells','-v7.3');
     save(matname1,'x0','y0','Y00','Ymin','Ntr','ID','HOLD_THE_LINE','CONTINUED_ACCRETION','Model_name','UTMZONE','SL','t1','t0','tstop','tforecast','tforecast2','dt','Nsubcycles','WAVEID','SLRID','y_rms_sat','y_rms_gps','t_obs','Y_obs','Y_rms','SAT','S','t_SLR','Smean','t_output','Y','Ylst','Ylt','Yst','Ybru','Yvlt','Y0','YY','YST','YLST','YBRU','YVLT','YCI1','YCI2','YSTCI1','YSTCI2','YLSTCI1','YLSTCI2','YBRUCI1','YBRUCI2','YVLTCI1','YVLTCI2','YLST_only','YLST_only_CI1','YLST_only_CI2','NOBS','NOBS_cal','NOBS_val','R','MSE','RMSE','RMSM','MAE','SKILL','IDX_AGREEMENT','LAMBDA','NOBS_cal_sat','NOBS_val_sat','NOBS_sat','R_sat','MSE_sat','RMSE_sat','RMSM_sat','MAE_sat','SKILL_sat','IDX_AGREEMENT_sat','LAMBDA_sat','PCT_sat','-v7.3');
